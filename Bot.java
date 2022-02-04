@@ -93,7 +93,6 @@ class Bot
 		return null;
 	}
 
-
 	public static List<String> selectTagNames(String user_id)
 	{
 		String select_qr  = "select distinct tag from tags where user_id = ?";
@@ -150,7 +149,6 @@ class Bot
 		}
 	}
 	
-	
 	public static void main(String[] args) throws InterruptedException
 	{
 		gson = new GsonBuilder().setPrettyPrinting().create();
@@ -170,8 +168,6 @@ class Bot
 			
 			NodeList conf = doc.getElementsByTagName("configuration");
 	
-			System.out.println(conf.getLength());
-			
 			for(int i = 0; i < conf.getLength(); ++i)
 			{
 				Node node = conf.item(i);
@@ -242,7 +238,6 @@ class Bot
 						String msg_text = message.get("text").getAsString();
 						String chat_id = message.get("chat").getAsJsonObject().get("id").getAsString();
 						
-						// Regestering new TAG now
 						if(msg_text.contains("/tag")){
 							String[] param = msg_text.split(" ");
 							
@@ -286,10 +281,9 @@ class Bot
 								}	
 							}
 							
+							// List all stickers associated with the tag and attatch "delete" button to each one
 							if(param.length == 2){
-								// If given parametr saved as a tag, send all the stickers associated with it
 								List<String> stickers = selectStcikers(user_id, param[1]);
-								// Add all stickers associated with tag to InlineAnswerArray
 								if(stickers != null){
 									for(int k = 0; k < stickers.size(); ++k){
 										tag_bot.sendStickerWithInline(chat_id, stickers.get(k), 
@@ -302,7 +296,6 @@ class Bot
 							}
 						}
 						
-						// Remove stated tag
 						if(msg_text.contains("/rm")){
 							String[] param = msg_text.split(" ");								
 							deleteTag(user_id, param[1]);
@@ -311,14 +304,11 @@ class Bot
 					
 					if(users_state.get(user_id).record_tag)
 					{
-						// If we receive a sticker and some tag was set then associate the sticker with this tag
 						if(message.get("sticker") != null && !users_state.get(user_id).tag.equals(""))
 						{
 							sticker_id = message.get("sticker").getAsJsonObject().get("file_id").getAsString();			
 							insertTag(user_id, users_state.get(user_id).tag.tag_name, sticker_id);
 						}
-					} else {
-						// Send "Usage example" message
 					}
 				}
 			
@@ -346,14 +336,14 @@ class Bot
 							if(saved_tag.contains(query_tag))
 							{	
 								List<String> stickers = selectStcikers(user_id, saved_tag);
-								// Add all stickers associated with tag to InlineAnswerArray
+							
 								if(stickers != null){
 									for(String s_id : stickers)
 									{								
 										InlineQueryResultCachedSticker st_answer =
 											new InlineQueryResultCachedSticker(UUID.randomUUID().toString(), s_id);
 										
-										// Inline answer cannot include mor ethen 50 stickers
+										// Inline answer cannot include more then  50 stickers
 										if(insw_index < 50){
 											answer_stickers.add(st_answer);
 											++insw_index;
@@ -364,14 +354,13 @@ class Bot
 						}
 					}
 					
-					// If we managed to find some stickers, send them away!
 					if(answer_stickers.size() != 0)
 					{	
 						tag_bot.sendInlineAnswer(inline_query.get("id").getAsString(), gson.toJson(answer_stickers));
 					}
 				}
 
-				// Got new inline keyboard callbacl
+				// Got new inline keyboard callback
 				if(updates.get(i).getAsJsonObject().get("callback_query") != null)
 				{
 					callback_query = updates.get(i).getAsJsonObject().get("callback_query").getAsJsonObject();
