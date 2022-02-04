@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<configuration>
+
+       <url>url</url>
+       <user>user</user>
+       <password>pass</password>
+       <token>token</token>
+
+</configuration>

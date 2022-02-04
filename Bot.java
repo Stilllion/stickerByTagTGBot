@@ -1,149 +1,19 @@
-import com.google.gson.*;
-
 import java.io.*;
-
-import javax.net.ssl.HttpsURLConnection;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-
-
 import java.util.*;
-
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Connection;
 
-// BOT API
+import com.google.gson.*;
 
-class InlineQueryResultCachedSticker
-{
-	String type = "sticker";
-	String id = "";
-	String sticker_file_id = "";
-	
-	InlineQueryResultCachedSticker(){}
-	
-	InlineQueryResultCachedSticker(String id, String sticker_file_id)
-	{
-		this.id = id;
-		this.sticker_file_id = sticker_file_id;
-	}
-}
-
-class InlineKeyboardButton
-{
-	String text = "delete";
-	InlineKeyboardButton(){}
-}
-
-class TelegramAPI 
-{
-	Gson gson = null;
-	
-	HttpClient httpClient = HttpClient.newBuilder().build();
-	HttpRequest request = null;
-	HttpResponse<String> response = null; 
-	
-	StringBuilder url_str = new StringBuilder();
-	String base_url = "https://api.telegram.org/";
-	String token = "";
-	
-	TelegramAPI(){
-		gson = new GsonBuilder().setPrettyPrinting().create();
-		base_url = base_url + token;
-	}
-	
-	JsonArray getUpdates(int offset) throws Exception
-	{
-		url_str.setLength(0);
-		url_str.append(base_url).append("getUpdates?timeout=120&offset=").append(Integer.toString(offset));
-		
-		request  = HttpRequest.newBuilder().GET().uri(URI.create(url_str.toString())).build();
-		response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-		
-		System.out.println(java.time.LocalDateTime.now() + " Getting update... Response:");
-		if(JsonParser.parseString(response.body()).getAsJsonObject().getAsJsonArray("result").size() != 0){
-			System.out.println(gson.toJson(JsonParser.parseString(response.body())));			
-		}
-		
-		return JsonParser.parseString(response.body()).getAsJsonObject().getAsJsonArray("result");
-	}
-	
-	void sendStickerWithInline(String chat_id, String sticker_id, String sticker_index) throws Exception
-	{
-		url_str.setLength(0);
-
-		String delete_key  = "{\"inline_keyboard\":[[{\"text\":\"DELETE\",\"callback_data\":\"" + sticker_index + "\"}]]}";
-		
-		String encoded_key = URLEncoder.encode(delete_key, "UTF-8");
-		
-		url_str.append(base_url).append("sendSticker?chat_id=" + chat_id + "&sticker=" + sticker_id + 
-																	"&reply_markup=" + encoded_key);
-		
-		request  = HttpRequest.newBuilder().GET().uri(URI.create(url_str.toString())).build();
-		response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-		System.out.println(java.time.LocalDateTime.now() + " Sending stickers with buttons... Response:");
-		System.out.println(gson.toJson(JsonParser.parseString(response.body())));
-		
-		return;
-	}
-	
-	
-	void sendMessage(String chat_id, String msg) throws Exception
-	{
-		url_str.setLength(0);
-		String encoded_msg = URLEncoder.encode(msg, "UTF-8");
-		url_str.append(base_url).append("sendMessage?chat_id=" + chat_id + "&text=" + encoded_msg);
-		
-		request  = HttpRequest.newBuilder().GET().uri(URI.create(url_str.toString())).build();
-		response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-		
-		System.out.println(java.time.LocalDateTime.now() + " Sent a message: " + msg + " Response:");	
-		System.out.println(gson.toJson(JsonParser.parseString(response.body())));
-		
-		return;
-	}
-	
-	void sendInlineAnswer(String query_id, String answer) throws Exception
-	{
-		url_str.setLength(0);
-		
-		String encoded_answer = URLEncoder.encode(answer, "UTF-8");
-		url_str.append(base_url).append("answerInlineQuery?inline_query_id=" + query_id + "&results=" + encoded_answer + "&cache_time=0");
-		
-		
-		request  = HttpRequest.newBuilder().GET().uri(URI.create(url_str.toString())).build();
-		response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-		
-		
-		System.out.println(gson.toJson(JsonParser.parseString(response.body())));
-		
-		return;
-	}
-	
-	void deleteMessage(String chat_id, String msg_id) throws Exception
-	{
-		url_str.setLength(0);
-
-		url_str.append(base_url).append("deleteMessage?chat_id=" + chat_id + "&message_id=" + msg_id);
-		
-		request  = HttpRequest.newBuilder().GET().uri(URI.create(url_str.toString())).build();
-		response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-		
-		System.out.println(java.time.LocalDateTime.now() + " Deleting msg, id: " + msg_id + " Response: ");
-		System.out.println(gson.toJson(JsonParser.parseString(response.body())));
-		
-		return;
-	}
-}
-
+import javax.xml.parsers.DocumentBuilder; 
+import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 class Tag
 {
@@ -176,7 +46,7 @@ class User
 	}
 }
 
-class BotSQL
+class Bot
 {
 	static Connection con = null;
 	static Gson gson = null;
@@ -281,7 +151,7 @@ class BotSQL
 	}
 	
 	
-	public static void main(String[] args) throws Exception
+	public static void main(String[] args) throws InterruptedException
 	{
 		gson = new GsonBuilder().setPrettyPrinting().create();
 		
@@ -289,20 +159,43 @@ class BotSQL
 		String db_user = "";
 		String db_pass = "";
 		
+		String bot_token = "";
+		
 		// Read XML config file 
-		
-		
-		try{
+		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+		try
+		{
+			DocumentBuilder db = dbf.newDocumentBuilder();
+			Document doc = db.parse(new File("conf.xml"));
+			
+			NodeList conf = doc.getElementsByTagName("configuration");
+	
+			System.out.println(conf.getLength());
+			
+			for(int i = 0; i < conf.getLength(); ++i)
+			{
+				Node node = conf.item(i);
+
+				if (node.getNodeType() == Node.ELEMENT_NODE) {
+					Element el = (Element) node;
+					
+					db_url= el.getElementsByTagName("url").item(0).getTextContent();
+					db_user = el.getElementsByTagName("user").item(0).getTextContent();
+					db_pass = el.getElementsByTagName("password").item(0).getTextContent();
+					bot_token = el.getElementsByTagName("token").item(0).getTextContent();
+				}
+			}
+
 			// Loading MySQL driver
 			Class.forName("com.mysql.cj.jdbc.Driver");		
 			con = DriverManager.getConnection(db_url, db_user, db_pass);
 			
-		} catch (Exception ex){
-			System.out.println("ERROR GETTING THE CONNECTION: " + ex);
+		} catch(Exception ex){
+			System.out.println(ex);
+			return;
 		}
 		
-		boolean record_tag = false;
-		
+		// Offset for bot updates
 		int offset = 9000;
 	
 		String user_id = "";
@@ -314,7 +207,7 @@ class BotSQL
 		JsonObject inline_query = null;
 		JsonObject callback_query = null;
 		
-		TelegramAPI tag_bot = new TelegramAPI();
+		TelegramAPI tag_bot = new TelegramAPI(bot_token);
 		
 		// Map user_id to user state to handle each user separately
 		HashMap<String, User> users_state = new HashMap<String, User>();
@@ -323,7 +216,12 @@ class BotSQL
 		{
 			updates = tag_bot.getUpdates(offset);
 			
-			if(updates.size() == 0)	continue;
+			if(updates == null ){
+				System.out.println("Couldn't get updates!");
+				// Maybe our internet connection dropped. Wait for a minute then try again
+				Thread.sleep(1000*60);
+				continue;
+			} else if(updates.size() == 0) continue;
 			
 			for(int i = 0; i < updates.size(); ++i)
 			{	
@@ -445,7 +343,8 @@ class BotSQL
 													
 						for(String saved_tag : saved_tags)
 						{
-							if(saved_tag.contains(query_tag)){	
+							if(saved_tag.contains(query_tag))
+							{	
 								List<String> stickers = selectStcikers(user_id, saved_tag);
 								// Add all stickers associated with tag to InlineAnswerArray
 								if(stickers != null){
@@ -484,7 +383,6 @@ class BotSQL
 					String callback_data = callback_query.get("data").getAsString();
 					
 					String[] ind_tag = callback_data.split(" ");
-					
 					
 					List<String> stickers = selectStcikers(user_id, ind_tag[0]);
 					
