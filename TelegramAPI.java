@@ -53,17 +53,23 @@ class TelegramAPI
 		url_str.append(base_url).append("/getUpdates?timeout=120&offset=").append(Integer.toString(offset));
 		
 		request  = HttpRequest.newBuilder().GET().uri(URI.create(url_str.toString())).build();
-		
+		JsonArray updates = null;
 		try{
 			response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());			
 			
-			System.out.println(java.time.LocalDateTime.now() + " Getting update... Response:");
-			System.out.println(gson.toJson(JsonParser.parseString(response.body())));			
+			updates = JsonParser.parseString(response.body()).getAsJsonObject().getAsJsonArray("result");
+			
+			// Skip logging of empty updates
+			if(updates.size() != 0){
+				System.out.println(java.time.LocalDateTime.now() + " Getting update... Response:");
+				System.out.println(gson.toJson(JsonParser.parseString(response.body())));			
+			}
+			
 		} catch (Exception e){
 			System.out.println(e);
 		}
 		
-		return JsonParser.parseString(response.body()).getAsJsonObject().getAsJsonArray("result");
+		return updates;
 	}
 	
 	void sendStickerWithInline(String chat_id, String sticker_id, String sticker_index)

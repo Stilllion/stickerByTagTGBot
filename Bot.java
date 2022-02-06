@@ -208,8 +208,18 @@ class Bot
 		// Map user_id to user state to handle each user separately
 		HashMap<String, User> users_state = new HashMap<String, User>();
 		
+		long db_ping_timeout = System.currentTimeMillis();
+		
 		while(true)
 		{
+			// ping db every hour to prevent connection closing due to timeout
+			if(System.currentTimeMillis() - db_ping_timeout >= 1000*60*60){
+				try{
+					db_ping_timeout = System.currentTimeMillis();
+					con.isValid(0);
+				} catch (SQLException ex){System.out.println(ex);}
+			}
+			
 			updates = tag_bot.getUpdates(offset);
 			
 			if(updates == null ){
