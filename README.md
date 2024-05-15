@@ -3,8 +3,6 @@ Inline telegram bot that finds stickers by user-defined tags!
 Associate your stickers with any character string (no whitespaces) trough private messages with the bot, 
 then use it inline to quickly find those stickers when you need them.
 
-Try it out: [@sgetbtbot](https://telegram.me/sgetbtbot)
-
 I wrote this bot to practice my Java skills. It uses MySQL database to store user info and XML file for configuration.
 
 ## Dependencies
